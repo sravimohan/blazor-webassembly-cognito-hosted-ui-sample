@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Demo Cognito Stack
+
+Resources:
+  BlazorDemoUserPool:
+    Type: 'AWS::Cognito::UserPool'
+    Properties:
+      UserPoolName: !Sub blazor-demo-userpool
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - AttributeDataType: Boolean
+          Mutable: true
+          Name: Terms
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+
+  BlazorDemoClient:
+    Type: 'AWS::Cognito::UserPoolClient'
+    Properties:
+      ClientName: blazor-demo-client
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      CallbackURLs:
+        - 'https://localhost:5001/authentication/login'
+        - 'https://localhost:5001/authentication/login-callback'
+      LogoutURLs:
+        - 'https://localhost:5001/authentication/logout'
+        - 'https://localhost:5001/authentication/logout-callback'
+      ExplicitAuthFlows:
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      GenerateSecret: false
+      UserPoolId: !Ref BlazorDemoUserPool
+
+  UserPoolDomain: 
+    Type: AWS::Cognito::UserPoolDomain 
+    Properties:
+      UserPoolId: !Ref BlazorDemoUserPool
+      Domain: !Sub blazor-demo-login
+
+Outputs:
+  UserPoolId:
+    Value: !Ref BlazorDemoUserPool
+    Export:
+      Name: "cognito::blazor-demo::userpool::id"
+  ClientId:
+    Value: !Ref BlazorDemoClient
+    Export:
+      Name: "cognito::blazor-demo::client::id"      
